@@ -1,0 +1,220 @@
+import mysql.connector as sq
+import datetime
+from tabulate import tabulate 
+db = input("Enter name of your database :")
+con = sq.connect(host = 'localhost', user = 'root', 
+password = 'anshika@2006')
+cur = con.cursor()
+sql = "Create database if not exists %s"%(db,)
+cur.execute(sql)
+print("Database created successfully.")
+cur = con.cursor()
+cur.execute("Use "+db)
+tablename = input("Name of table to be created :")
+query = "Create table if not exists"+tablename+" \
+(empno int primary key,\
+name varchar(15) not null,\
+job varchar(15),\
+BasicSalary int,\
+DA float,\
+HRA float,\
+GrossSalary float,\
+Tax float,\
+NetSalary float)"
+print("Table "+tablename+" created successfully.")
+cur.execute(query)
+while True:
+ print('\n\n\n')
+ print("*"*95)
+ print('\t\t\t\t\tMAIN MENU')
+ print("*"*95)
+ print('\t\t\t\t1. Adding employee records')
+ print('\t\t\t\t2. For displaying records of all the 
+employees')
+ print('\t\t\t\t3. For displaying record of a particular 
+employee')
+ print('\t\t\t\t4. For deleting records of all the 
+employees')
+ print('\t\t\t\t5. For deleting record of a particular 
+employee')
+ print('\t\t\t\t6. For modification in a record')
+ print('\t\t\t\t7. For displaying payroll')
+print('\t\t\t\t8. For displaying salary slip for all the 
+employees')
+ print('\t\t\t\t9. For displaying salary slip for a 
+particular employee')
+ print('\t\t\t\t10. For Exit')
+ print('Enter choice :',end = '')
+ choice = int(input())
+ if choice==1:
+  try:
+   print('Enter employee information->')
+   mempno = int(input("Enter employee number 
+:"))
+   mname = input("Enter employee name :")
+   mjob = input("Enter employee job :")
+   mbasic = float(input("Enter basic salary :"))
+   if mjob.upper()=='OFFICER':
+     mda = mbasic*0.5
+     mhra = mbasic*0.35
+     mtax = mbasic*0.2
+   elif mjob.upper()=='MANAGER':
+     mda = mbasic*0.45
+     mhra = mbasic*0.30
+     mtax = mbasic*0.15
+   else:
+     mda = mbasic*0.40
+     mhra = mbasic*0.25
+     mtax = mbasic*0.1
+     mgross = mbasic+mda+mhra
+     mnet = mgross-mtax
+     rec = (mempno,mname,mjob,mbasic,mda,mhra,mgross,mtax
+,mnet)
+     query = "insert into "+tablename+" 
+values(%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+     cur.execute(query,rec)
+     con.commit()
+     print("Record added succcessfully.")
+  except Exception as e:
+   print("Something went wrong ",e)
+ elif choice==2:
+  try:
+   query = 'select * from'+tablename
+   cur.execute(query)
+   print(tabulate(cur,headers=['Empno','Name','Job','Basic Salary','DA','HRA','Gross Salary','Tax','Net 
+Salary'],tablefmt='psql'))
+   '''myrecords=cur.fetchall()
+   for rec in myrecords:
+   print(rec)'''
+  except:
+   print("Something went wrong")
+ elif choice==3:
+  try:
+   en = input("Enter employee no. of the record to be displayed:")
+   query = "select * from"+tablename+" where empno="+en
+   cur.execute(query)
+   myrecord = cur.fetchone()
+   print("\n\nRecord of employee no.:"+en)
+   print(myrecord)
+   c = cur.rowcount
+   if c==-1:
+    print("Nothing to display!")
+  except Exception as e:
+    print("Something went wrong",e)
+ elif choice==4:
+  try:
+   ch=input("Do you want to delete all the records?(y/n):")
+   if ch.upper()=="Y":
+    cur.execute("Delete from"+tablename)
+    con.commit()
+    print("All the records are deleted successfully.")
+  except Exception as e:
+   print("Something went wrong",e)
+ elif choice==5:
+  try:
+   en = input("Enter employee no. of the record to be deleted :")
+   query = "delete from"+tablename+" where empno="+en
+   cur.execute(query)
+   con.commit()
+   c = cur.rowcount
+   if c > 0:
+    print("Deletion done")
+   else:
+    print("Employee no ",en," not found")
+  except Exception as e:
+   print("Something went wrong",e)
+ elif choice==6:
+  try:
+   en = input("Enter employee no. of the record to be modified :")
+   query = 'select * from '+tablename+' where empno='+en
+   cur.execute(query)
+   myrecord = cur.fetchone()
+   c = cur.rowcount
+   if c==-1:
+    print('Empno '+en+' does not exist')
+   else:
+    mname=myrecord[1]
+    mjob=myrecord[2]
+    mbasic=myrecord[3]
+    print("empno :",myrecord[0])
+    print("name :",myrecord[1]) 
+    print("job :",myrecord[2])
+    print("basic :",myrecord[3])
+    print("da :",myrecord[4])
+    print("hra :",myrecord[5])
+    print("gross :",myrecord[6])
+    print("tax :",myrecord[7])
+    print("net :",myrecord[8])
+    print("----------------------")
+    print("Type modify below or just press enter for no change")
+    x = input("Enter name :")
+    if len(x)>0:
+     mname= x
+    x = input("Enter job:")
+    if len(x)>0:
+     mjob = x
+    x = input("Enter basic salary :")
+    if len(x)>0:
+     mbasic = float(x)
+    query = 'update '+tablename+' set name='+"'"+mname+"'"+','+'job='+"'"+mjob+"'"+','+'basicsalary='+str(mbasic)+' where empno='+en
+    cur.execute(query)
+    con.commit()
+    print("Record modified")
+  except Exception as e:
+   print("Something went wrong",e)
+ elif choice==7:
+  try:
+   query = 'select * from'+tablename
+   cur.execute(query)
+   myrecords = cur.fetchall()
+   print("\n\n\n")
+   print("*"*95)
+   print("Employee Payroll".center(90))
+   print("*"*95)
+   now = datetime.datetime.now()
+   print("Current Date and Time:",end ='')
+   print(now.strftime("%Y-%m-%d %H:%M:%S"))
+   print()
+   print(95*'-')
+   print('%-5s %-15s %-10s %-8s %-8s %-8s %-9s %-8s %-9s'\%('Empno','Name','Job','Basic','DA','HRA','Gross','Tax','Net'))
+   print(95*'-')
+   for rec in myrecords:
+    print('%4d %-15s %-10s %8.2f %8.2f %8.2f %9.2f %8.2f %9.2f'%rec)
+    print(95*'-')
+  except Exception as e:
+   print("Something went wrong",e)
+ elif choice==8:
+  try:
+   query = 'select * from'+tablename
+   cur.execute(query)
+   now = datetime.datetime.now()
+   print("\n\n\n")
+   print('-'*95)
+   print("\t\t\t\Salary Slip")
+   print('-'*95)
+   print("Current Date and Time:",end ='')
+   print(now.strftime("%Y-%m-%d %H:%M:%S"))
+   myrecords = cur.fetchall()
+   for rec in myrecords:
+    print('%4d %-15s %-10s %8.2f %8.2f %8.2f %9.2f %8.2f %9.2f'%rec)
+  except Exception as e:
+   print("Something went wrong",e)
+ elif choice==9:
+  try:
+   en = input("Enter employee no whose pay slip you want to retrieve:")
+   query = 'select * from '+tablename+' where empno='+en
+   cur.execute(query)
+   now = datetime.datetime.now()
+   print("\n\n\n\t\t\t\tSalary Slip")
+   print("Current Date and Time:",end = '')
+   print(now.strftime("%Y-%m-%d %H:%M:%S"))
+ 
+print(tabulate(cur,headers=['Empno','Name','Job','Bas
+ic Salary','DA','HRA','Gross Salary','Tax','Net 
+Salary'],tablefmt='psql'))
+  except Exception as e:
+   print("Something went wrong",e)
+ elif choice==10:
+  break
+ else:
+  print("WRONG CHOICE")
